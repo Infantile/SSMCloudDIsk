@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.CloudDiskUserMapper">
+	<!-- 定义缓存 一般是一级缓存，如果用同一个sqlsession 那么相同查询直接会从缓存中查找 -->
+	<cache size="1024" flushInterval="60000" eviction="LRU" readOnly="false"></cache>
+	<resultMap id="CloudDiskUserResultMap" type="cn.springmvc.model.CloudDiskUser">
+		<id column="userID" property="userid" jdbcType="VARCHAR" />
+		<result column="userLoginID" property="userLoginID" jdbcType="VARCHAR" />
+		<result column="userName" property="username" jdbcType="VARCHAR" />
+		<result column="password" property="password" jdbcType="VARCHAR" />
+		<result column="operator" property="operator" jdbcType="VARCHAR" />
+		<result column="createDate" property="createdate" jdbcType="VARCHAR" />
+	</resultMap>
+	<!-- 查询基础字段 -->	
+	<sql id="Base_Column_List">
+		userID,userLoginID, userName, password, operator, createDate
+	</sql>
+	<!-- 基础条件 -->
+	<sql id="Base_Conditon_List">
+		<if test="userID!=null">
+			and userID = #{userID}
+		</if>
+		<if test="userLoginID!=null">
+			and userLoginID = #{userLoginID}
+		</if>
+		<if test="userName!=null">
+			and userName = #{userName}
+		</if>
+		<if test="password!=null">
+			and password = #{password}
+		</if>
+		<if test="operator!=null">
+			and operator = #{operator}
+		</if>
+		<if test="createDate!=null">
+			and createDate = #{createDate}
+		</if>
+	</sql>
+	<!-- 排序查询条件 -->
+    <sql id="orderCondition">
+	    <if test="sort == null or sort == ''">
+		    userName ${order}
+	    </if>
+	    <if test="sort=='userLoginID'">
+		    userLoginID ${order}
+	    </if>
+	    <if test="sort=='username'">
+	  	    userName ${order}
+	    </if>
+    </sql>
+	<!-- 查询数据 -->
+	<select id="queryCloudDiskUserInfo" parameterType="cn.springmvc.model.CloudDiskUser"
+		resultMap="CloudDiskUserResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from cloud_disk_user where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</select>
+	
+	<!-- 增加数据 -->
+	<insert id="insertCloudDiskUserInfo" parameterType="cn.springmvc.model.CloudDiskUser">
+		insert into cloud_disk_user
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				userID,
+			</if>
+			<if test="userLoginID != null">
+				userLoginID,
+			</if>
+			<if test="userName != null">
+				userName,
+			</if>
+			<if test="password != null">
+				password,
+			</if>
+			<if test="operator != null">
+				operator,
+			</if>
+			<if test="createDate != null">
+				createDate,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				#{userID},
+			</if>
+			<if test="userLoginID != null">
+				#{userLoginID},
+			</if>
+			<if test="userName != null">
+				#{userName},
+			</if>
+			<if test="password != null">
+				#{password},
+			</if>
+			<if test="operator != null">
+				#{operator},
+			</if>
+			<if test="createDate != null">
+				#{createDate},
+			</if>
+		</trim>
+	</insert>
+	<!-- 删除数据 -->
+	<delete id="deleteCloudDiskUserInfo" parameterType="cn.springmvc.model.CloudDiskUser">
+		delete from
+		cloud_disk_user	where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</delete>
+	<!-- 修改数据 -->
+	<update id="updateCloudDiskUserInfo" parameterType="cn.springmvc.model.CloudDiskUser">
+		update cloud_disk_user
+		<set>
+			<if test="userLoginID != null">
+				userLoginID = #{userLoginID},
+			</if>
+			<if test="userName != null">
+				userName = #{userName},
+			</if>
+			<if test="password != null">
+				password = #{password},
+			</if>
+			<if test="operator != null">
+				operator = #{operator},
+			</if>
+			<if test="createDate != null">
+				createDate = #{createDate},
+			</if>
+		</set>
+		where userID = #{userID} 
+	</update>
+</mapper>

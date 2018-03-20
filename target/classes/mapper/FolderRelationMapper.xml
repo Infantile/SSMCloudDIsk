@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.FolderRelationMapper">
+	<resultMap id="FolderRelationResultMap" type="cn.springmvc.model.FolderRelation">
+		<id column="userID" property="userid" jdbcType="VARCHAR" />
+		<id column="parentFolderID" property="parentfolderid" jdbcType="VARCHAR" />
+		<id column="childrenFolderID" property="childrenfolderid" jdbcType="VARCHAR" />
+		<id column="isRootFolder" property="isRootFolder" jdbcType="BIT" />
+	</resultMap>
+	<!-- 查询基础字段 -->
+	<sql id="Base_Column_List">
+		userID, parentFolderID, childrenFolderID, isRootFolder
+	</sql>
+	<!-- 基础条件 -->
+	<sql id="Base_Conditon_List">
+		<if test="userID!=null">
+			and userID = #{userID}
+		</if>
+		<if test="parentFolderID!=null">
+			and parentFolderID = #{parentFolderID}
+		</if>
+		<if test="childrenFolderID!=null">
+			and childrenFolderID = #{childrenFolderID}
+		</if>
+		<if test="isRootFolder!=null">
+			and isRootFolder = #{isRootFolder}
+		</if>
+	</sql>
+	<!-- 查询数据 -->
+	<select id="queryFolderRelation" resultMap="FolderRelationResultMap"
+		parameterType="cn.springmvc.model.FolderRelation">
+		select
+		<include refid="Base_Column_List" />
+		from folder_relation where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</select>
+	<!-- 删除数据 -->
+	<delete id="deleteFolderRelation" parameterType="cn.springmvc.model.FolderRelation">
+		delete from
+		folder_relation
+		where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</delete>
+	<!-- 增加数据 -->
+	<insert id="insertFolderRelation" parameterType="cn.springmvc.model.FolderRelation">
+		insert into folder_relation
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				userID,
+			</if>
+			<if test="parentFolderID != null">
+				parentFolderID,
+			</if>
+			<if test="childrenFolderID != null">
+				childrenFolderID,
+			</if>
+			<if test="isRootFolder != null">
+				isRootFolder,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				#{userID},
+			</if>
+			<if test="parentFolderID != null">
+				#{parentFolderID},
+			</if>
+			<if test="childrenFolderID != null">
+				#{childrenFolderID},
+			</if>
+			<if test="isRootFolder != null">
+				#{isRootFolder},
+			</if>
+		</trim>
+	</insert>
+	<!-- 修改数据 -->	
+	<update id="updateFolderRelation" parameterType="cn.springmvc.model.FolderRelation">
+		update
+		folder_relation
+		<set>
+			<if test="parentFolderID != null">
+				parentFolderID = #{parentFolderID},
+			</if>
+			<if test="childrenFolderID != null">
+				childrenFolderID = #{childrenFolderID},
+			</if>
+			<if test="isRootFolder != null">
+				isRootFolder = #{isRootFolder},
+			</if>
+		</set>
+		where userID = #{userID}
+	</update>
+	
+	<!-- 修改数据 -->	
+	<update id="setRootFolder" parameterType="cn.springmvc.model.FolderRelation">
+		update
+		folder_relation
+		set 
+		parentFolderID = #{parentFolderID},			
+		isRootFolder = #{isRootFolder}
+		where userID = #{userID} and childrenFolderID = #{childrenFolderID}
+	</update>
+	<!-- 移动文件对象时更新目录关系信息 -->	
+	<update id="moveToFolderRelation" parameterType="cn.springmvc.model.FolderRelation">
+		update
+		folder_relation
+		<set>
+			<if test="parentFolderID != null">
+				parentFolderID = #{parentFolderID},
+			</if>
+			<if test="isRootFolder != null">
+				isRootFolder = #{isRootFolder},
+			</if>
+		</set>
+		where 1 = 1
+		<if test="userID != null">
+			and userID = #{userID}
+		</if>
+		<if test="childrenFolderID != null">
+			and childrenFolderID = #{childrenFolderID}
+		</if>
+	</update>
+</mapper>

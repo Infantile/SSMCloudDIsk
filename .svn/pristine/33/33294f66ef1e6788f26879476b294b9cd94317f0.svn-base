@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.ShareInfoMapper" >
+  <!-- 定义缓存 一般是一级缓存，如果用同一个sqlsession 那么相同查询直接会从缓存中查找 -->
+	<cache size="1024" flushInterval="6000" eviction="LRU" readOnly="false"></cache>
+  
+  <resultMap id="QueryMySharedFileInfoResultMap" type="cn.springmvc.model.QueryMySharedFileInfo" >
+        <result column="fileID" property="fileID" jdbcType="VARCHAR" />
+        <result column="shareObjectID" property="shareObjectID" jdbcType="VARCHAR" />
+		<result column="fileName" property="fileName" jdbcType="VARCHAR" />
+		<result column="fileSize" property="fileSize" jdbcType="VARCHAR" />
+		<result column="fileType" property="fileType" jdbcType="VARCHAR" />
+		<result column="operator" property="operator" jdbcType="VARCHAR" />
+		<result column="fileGroupName" property="filegroupname" jdbcType="VARCHAR" />
+		<result column="filePath" property="filepath" jdbcType="VARCHAR" />
+		<result column="shareObjectName" property="shareObjectName" jdbcType="VARCHAR" />
+		<result column="createDate" property="createDate" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="QueryShareObjectInfoResultMap" type="cn.springmvc.model.QueryShareObjectInfo" >
+        <result column="shareObjectID" property="shareObjectID" jdbcType="VARCHAR" />
+        <result column="shareObjectName" property="shareObjectName" jdbcType="VARCHAR" />
+        <result column="shareObjectLoginID" property="shareObjectLoginID" jdbcType="VARCHAR" />
+        <result column="shareObjectFlag" property="shareObjectFlag" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <resultMap id="QuerySharedFileInfoResultMap" type="cn.springmvc.model.ShareInfo" >
+        <result column="fileID" property="fileID" jdbcType="VARCHAR" />
+        <result column="shareObjectID" property="shareObjectID" jdbcType="VARCHAR" />
+		<result column="operator" property="operator" jdbcType="VARCHAR" />
+		<result column="createDate" property="createDate" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <!-- 排序查询条件 -->
+	<sql id="orderCondition">
+		<if test="sort == null or sort == ''">
+			AA.fileType DESC,convert(AA.operator USING gbk) ASC
+		</if>
+		<if test="sort=='fileName'">
+			AA.fileType ${order},convert(AA.fileName USING gbk) ${order}
+		</if>
+		<if test="sort=='fileSize'">
+			AA.fileType ${order},AA.fileSize+0 ${order}
+		</if>
+		<if test="sort=='fileType'">
+			AA.fileType ${order},convert(AA.operator USING gbk) ASC
+		</if>
+		<if test="sort=='createdate'">
+			AA.createDate ${order}
+		</if>
+		<if test="sort=='operator'">
+			AA.fileType ${order},convert(AA.operator USING gbk) ${order}
+		</if>
+		<if test="sort=='shareObjectName'">
+			AA.fileType ${order},convert(AA.shareObjectName USING gbk) ${order}
+		</if>
+	</sql>
+	
+	<!-- 排序查询条件 -->
+	<sql id="orderSharedFileCondition">
+		<if test="sort == null or sort == ''">
+			AA.fileType DESC,convert(AA.operator USING gbk) ASC
+		</if>
+		<if test="sort=='fileName'">
+			AA.fileType DESC,convert(AA.fileName USING gbk) ${order}
+		</if>
+		<if test="sort=='fileSize'">
+			AA.fileSize+0 ${order}
+		</if>
+		<if test="sort=='fileType'">
+			AA.fileType ${order},convert(AA.operator USING gbk) ASC
+		</if>
+		<if test="sort=='createdate'">
+			AA.fileType ${order}
+		</if>
+		<if test="sort=='operator'">
+			AA.fileType ${order},convert(AA.operator USING gbk) ASC
+		</if>
+		<if test="sort=='shareObjectName'">
+			AA.fileType ${order},convert(AA.operator USING gbk) ASC
+		</if>
+	</sql>
+	
+  <!-- 查询我共享给别人以及群组的共享文件列表信息 -->
+  <select id="queryMySharedFileByOperator"  parameterType="cn.springmvc.model.ShareInfo" resultMap="QueryMySharedFileInfoResultMap">
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,file_info,cloud_disk_user
+   WHERE share_info.operator=#{operator} AND share_info.fileID=file_info.fileID AND file_info.fileState='normal' AND share_info.shareObjectID=cloud_disk_user.userID
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,file_info,group_info
+   WHERE share_info.operator=#{operator} AND share_info.fileID=file_info.fileID AND file_info.fileState='normal' AND share_info.shareObjectID=group_info.groupID
+   UNION 
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info,cloud_disk_user
+   WHERE share_info.operator=#{operator} AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal' AND share_info.shareObjectID=cloud_disk_user.userID
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info,group_info
+   WHERE share_info.operator=#{operator} AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal' AND share_info.shareObjectID=group_info.groupID
+  </select>
+  
+  <!-- 查询别人共享给我或者群组中有我的共享文件列表信息 -->
+  <select id="queryMySharedFileByShareObjectID"  parameterType="cn.springmvc.model.ShareInfo" resultMap="QueryMySharedFileInfoResultMap">
+   select share_info.fileID as fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator as operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate as createDate
+   from share_info,file_info,cloud_disk_user
+   where shareObjectID=#{shareObjectID} and share_info.operator!=#{operator} and shareObjectID=cloud_disk_user.userID and share_info.fileID=file_info.fileID and file_info.fileState='normal'
+   union
+   SELECT share_info.fileID as fileID,share_info.shareObjectID as shareObjectID,folderName as fileName,'' as fileSize,'文件夹' AS fileType,share_info.operator as operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate as createDate
+   FROM share_info,folder_info,cloud_disk_user
+   WHERE shareObjectID=#{shareObjectID} AND share_info.operator!=#{operator} AND shareObjectID=cloud_disk_user.userID AND share_info.fileID=folder_info.folderID and folder_info.folderState='normal'
+   union
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator as operator,group_info.groupName as shareObjectName,share_info.createDate as createDate
+   FROM share_info,file_info,group_info
+   WHERE shareObjectID IN (SELECT groupID FROM group_member_info WHERE userID=#{shareObjectID}) and share_info.operator!=#{operator} AND shareObjectID=group_info.groupID and share_info.fileID=file_info.fileID and file_info.fileState='normal'
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,folderName AS fileName,'' as fileSize,'文件夹' as fileType,share_info.operator AS operator,group_info.groupName as shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info,group_info
+   WHERE shareObjectID in (SELECT groupID FROM group_member_info WHERE userID=#{shareObjectID}) AND share_info.operator!=#{operator} AND shareObjectID=group_info.groupID and share_info.fileID=folder_info.folderID and folder_info.folderState='normal'
+  </select>
+  
+  <!-- 查询我的共享文件列表信息 -->
+  <select id="queryMySharedFileTableInfo"  parameterType="java.util.Map" resultMap="QueryMySharedFileInfoResultMap">
+   select * from
+   (SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate,file_info.filePath,file_info.fileGroupName
+   FROM share_info,file_info,cloud_disk_user
+   WHERE share_info.operator=#{operator} AND share_info.fileID=file_info.fileID AND file_info.fileState='normal' AND share_info.shareObjectID=cloud_disk_user.userID
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate,file_info.filePath,file_info.fileGroupName
+   FROM share_info,file_info,group_info
+   WHERE share_info.operator=#{operator} AND share_info.fileID=file_info.fileID AND file_info.fileState='normal' AND share_info.shareObjectID=group_info.groupID
+   UNION 
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate,'' AS fileGroupName,'' AS filePath
+   FROM share_info,folder_info,cloud_disk_user
+   WHERE share_info.operator=#{operator} AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal' AND share_info.shareObjectID=cloud_disk_user.userID
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate,'' AS fileGroupName,'' AS filePath
+   FROM share_info,folder_info,group_info
+   WHERE share_info.operator=#{operator} AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal' AND share_info.shareObjectID=group_info.groupID
+   UNION
+   select share_info.fileID as fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator as operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate as createDate,file_info.filePath,file_info.fileGroupName
+   from share_info,file_info,cloud_disk_user
+   where shareObjectID=#{shareObjectID} and share_info.operator!=#{operator} and shareObjectID=cloud_disk_user.userID and share_info.fileID=file_info.fileID and file_info.fileState='normal'
+   union
+   SELECT share_info.fileID as fileID,share_info.shareObjectID as shareObjectID,folderName as fileName,'' as fileSize,'文件夹' AS fileType,share_info.operator as operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate as createDate,'' AS fileGroupName,'' AS filePath
+   FROM share_info,folder_info,cloud_disk_user
+   WHERE shareObjectID=#{shareObjectID} AND share_info.operator!=#{operator} AND shareObjectID=cloud_disk_user.userID AND share_info.fileID=folder_info.folderID and folder_info.folderState='normal'
+   union
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator as operator,group_info.groupName as shareObjectName,share_info.createDate as createDate,file_info.filePath,file_info.fileGroupName
+   FROM share_info,file_info,group_info
+   WHERE shareObjectID IN (SELECT groupID FROM group_member_info WHERE userID=#{shareObjectID}) and share_info.operator!=#{operator} AND shareObjectID=group_info.groupID and share_info.fileID=file_info.fileID and file_info.fileState='normal'
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID as shareObjectID,folderName AS fileName,'' as fileSize,'文件夹' as fileType,share_info.operator AS operator,group_info.groupName as shareObjectName,share_info.createDate AS createDate,'' AS fileGroupName,'' AS filePath
+   FROM share_info,folder_info,group_info
+   WHERE shareObjectID in (SELECT groupID FROM group_member_info WHERE userID=#{shareObjectID}) AND share_info.operator!=#{operator} AND shareObjectID=group_info.groupID and share_info.fileID=folder_info.folderID and folder_info.folderState='normal'
+   )AA order by <include refid="orderCondition"/> 
+  </select>
+  
+  <!-- 根据目录ID查看共享目录中的子文件列表信息 -->
+  <select id="queryNextPageSharedFileInfoByFolderID"  parameterType="java.util.Map" resultMap="QueryMySharedFileInfoResultMap">
+   select * from
+   (select folderID as fileID,folderName as fileName,'' as fileSize,'文件夹' as fileType,'' as operator,'' as shareObjectName,'' as createDate,'' AS fileGroupName,'' AS filePath
+   from folder_info
+   where folderID in ( 
+   select childrenFolderID
+   from folder_info,folder_relation
+   where folder_info.folderID=#{folderID} and folder_info.folderID=folder_relation.parentFolderID) and folderState='normal'
+   union
+   select fileID as fileID,fileName as fileName,fileSize,fileType,'' as operator,'' as shareObjectName,'' as createDate,fileGroupName,filePath
+   from file_info
+   where fileID in ( 
+   select childrenFolderID
+   from folder_info,folder_relation
+   where folder_info.folderID=#{folderID} and folder_info.folderID=folder_relation.parentFolderID) and fileState='normal'
+   )AA order by <include refid="orderSharedFileCondition"/>
+  </select>  
+  
+  <!-- 根据当前目录ID查看其父目录下的子文件列表信息 -->
+  <select id="queryPreviousPageSharedFileInfoByFolderID"  parameterType="cn.springmvc.model.FolderInfo" resultMap="QueryMySharedFileInfoResultMap">
+   SELECT folderID AS fileID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType
+   FROM folder_info
+   WHERE folderID IN
+  (SELECT childrenFolderID
+  FROM folder_relation
+  WHERE parentFolderID =(SELECT parentFolderID
+  FROM folder_relation
+  WHERE folder_relation.childrenFolderID=#{folderID})) AND folderState='normal'
+  UNION
+  SELECT fileID AS fileID,fileName AS fileName,fileSize,fileType
+  FROM file_info
+  WHERE fileID IN
+  (SELECT childrenFolderID
+  FROM folder_relation
+  WHERE parentFolderID =(SELECT parentFolderID
+  FROM folder_relation
+  WHERE folder_relation.childrenFolderID=#{folderID})) AND fileState='normal'
+  </select>
+  
+  <!-- 查询搜索共享文件信息 -->
+  <select id="queryMySharedSearchInfo"  parameterType="java.util.Map" resultMap="QueryMySharedFileInfoResultMap">
+   SELECT * FROM
+  (SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,file_info,cloud_disk_user
+   WHERE share_info.operator=#{operator} AND share_info.fileID=file_info.fileID AND file_info.fileState='normal' AND share_info.shareObjectID=cloud_disk_user.userID
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,file_info,group_info
+   WHERE share_info.operator=#{operator} AND share_info.fileID=file_info.fileID AND file_info.fileState='normal' AND share_info.shareObjectID=group_info.groupID
+   UNION 
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info,cloud_disk_user
+   WHERE share_info.operator=#{operator} AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal' AND share_info.shareObjectID=cloud_disk_user.userID
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info,group_info
+   WHERE share_info.operator=#{operator} AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal' AND share_info.shareObjectID=group_info.groupID
+   UNION   
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,file_info,cloud_disk_user
+   WHERE shareObjectID=#{shareObjectID} AND share_info.operator!=#{operator} AND shareObjectID=cloud_disk_user.userID AND share_info.fileID=file_info.fileID AND file_info.fileState='normal'
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,cloud_disk_user.userName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info,cloud_disk_user
+   WHERE shareObjectID=#{shareObjectID} AND share_info.operator!=#{operator} AND shareObjectID=cloud_disk_user.userID AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal'
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,file_info,group_info
+   WHERE shareObjectID IN (SELECT groupID FROM group_member_info WHERE userID=#{shareObjectID}) AND share_info.operator!=#{operator} AND shareObjectID=group_info.groupID AND share_info.fileID=file_info.fileID AND file_info.fileState='normal'
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,group_info.groupName AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info,group_info
+   WHERE shareObjectID IN (SELECT groupID FROM group_member_info WHERE userID=#{shareObjectID}) AND share_info.operator!=#{operator} AND shareObjectID=group_info.groupID AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal'
+   ) AA
+   WHERE AA.fileName LIKE CONCAT('%',#{search},'%') ORDER BY AA.createDate DESC
+  </select>
+  
+  <!-- 删除共享文件信息 -->
+	<delete id="deleteMySharedInfo" parameterType="cn.springmvc.model.ShareInfo">
+		DELETE 
+        FROM share_info
+        WHERE fileID=#{fileID} AND shareObjectID=#{shareObjectID} AND operator=#{operator} AND createDate=#{createDate};
+	</delete>   
+	
+	<!-- 根据文件ID删除共享文件信息 -->
+	<delete id="deleteSharedInfoInfo" parameterType="cn.springmvc.model.ShareInfo">
+		DELETE 
+        FROM share_info
+        WHERE fileID=#{fileID}
+	</delete>     
+	
+  <!-- 查询公共共享文件列表信息 -->
+  <select id="queryPublicSharedFileByShareObjectID"  parameterType="java.util.Map" resultMap="QueryMySharedFileInfoResultMap">
+   select * from
+  (select share_info.fileID as fileID,share_info.shareObjectID as shareObjectID,fileName,fileSize,fileType,share_info.operator as operator,'所有人' AS shareObjectName,share_info.createDate as createDate,file_info.fileGroupName,file_info.filePath
+   from share_info,file_info
+   where shareObjectID='all' and share_info.fileID=file_info.fileID and file_info.fileState='normal'
+   union
+   SELECT share_info.fileID as fileID,share_info.shareObjectID as shareObjectID,folderName as fileName,'' as fileSize,'文件夹' AS fileType,share_info.operator as operator,'所有人' AS shareObjectName,share_info.createDate as createDate,'' AS fileGroupName,'' AS filePath
+   FROM share_info,folder_info
+   WHERE shareObjectID='all' and share_info.fileID=folder_info.folderID and folder_info.folderState='normal'
+   )AA order by <include refid="orderCondition"/>	
+  </select>	
+  
+  <!-- 根据搜索条件查询公共共享文件列表信息 -->
+  <select id="queryPublicSharedSearchInfo"  parameterType="java.util.Map" resultMap="QueryMySharedFileInfoResultMap">
+   SELECT * FROM
+   (SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,fileName,fileSize,fileType,share_info.operator AS operator,'所有人' AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,file_info
+   WHERE shareObjectID='all' AND share_info.fileID=file_info.fileID AND file_info.fileState='normal'
+   UNION
+   SELECT share_info.fileID AS fileID,share_info.shareObjectID AS shareObjectID,folderName AS fileName,'' AS fileSize,'文件夹' AS fileType,share_info.operator AS operator,'所有人' AS shareObjectName,share_info.createDate AS createDate
+   FROM share_info,folder_info
+   WHERE shareObjectID='all' AND share_info.fileID=folder_info.folderID AND folder_info.folderState='normal'
+   ) AA 
+   WHERE AA.fileName LIKE CONCAT('%',#{search},'%') ORDER BY AA.createDate DESC
+  </select>	
+
+  <!-- 查询共享对象列表信息 -->
+  <select id="queryShareObjectInfo"  parameterType="cn.springmvc.model.QueryShareObjectInfo" resultMap="QueryShareObjectInfoResultMap">
+   select 'all' as shareObjectID,'所有人' as shareObjectName,'' as shareObjectLoginID,'2' as shareObjectFlag
+   union
+   select group_info.groupID as shareObjectID,groupName as shareObjectName,'群组' as shareObjectLoginID,'1' as shareObjectFlag
+   from group_info,group_member_info,cloud_disk_user
+   where group_member_info.userID = #{shareObjectID} 
+   and group_member_info.groupID=group_info.groupID
+   and cloud_disk_user.userID=group_info.operator
+   <if test="shareSearchString!=null">
+   and (group_info.groupName LIKE CONCAT('%',#{shareSearchString},'%') 
+  		or '群组' LIKE CONCAT('%',#{shareSearchString},'%'))
+   </if>
+   union
+   select userID as shareObjectID,userName as shareObjectName,userLoginID as shareObjectLoginID,'0' as shareObjectFlag
+   from cloud_disk_user
+   where userID != #{shareObjectID}
+   <if test="shareSearchString!=null">
+   and (cloud_disk_user.userName LIKE CONCAT('%',#{shareSearchString},'%') 
+  		or cloud_disk_user.userLoginID LIKE CONCAT('%',#{shareSearchString},'%'))
+   </if>
+  </select>	
+  
+  <!-- 查询重复共享对象信息 -->
+  <select id="queryRepeatedShareInfo" parameterType="cn.springmvc.model.ShareInfo"
+		resultMap="QuerySharedFileInfoResultMap">
+		select *
+		from share_info 
+		where fileID = #{fileID}
+		and shareObjectID = #{shareObjectID}
+		and operator = #{operator}
+  </select>
+  
+  <!-- 插入共享记录信息 -->
+  <insert id="insertShareInfo" parameterType="cn.springmvc.model.ShareInfo">
+		INSERT 
+        INTO share_info
+        VALUES(
+        #{fileID},
+        #{shareObjectID},
+        #{operator},
+        #{createDate})
+  </insert>
+  <!-- 查询某个文件ID是否是共享文件 -->
+  <select id="querySharedFileByFileID" parameterType="java.lang.String" resultMap="QuerySharedFileInfoResultMap">
+   SELECT * FROM share_info
+   WHERE fileID=#{fileID}
+  </select>	
+</mapper>

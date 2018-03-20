@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.FolderInfoMapper">
+	<resultMap id="FolderInfoResultMap" type="cn.springmvc.model.FolderInfo">
+		<id column="folderID" property="folderID" jdbcType="VARCHAR" />
+		<result column="folderName" property="folderName" jdbcType="VARCHAR" />
+		<result column="folderState" property="folderState" jdbcType="VARCHAR" />
+		<result column="operator" property="operator" jdbcType="VARCHAR" />
+		<result column="createDate" property="createDate" jdbcType="VARCHAR" />
+	</resultMap>
+	<resultMap id="TreeFolderDataInfoResultMap" type="cn.springmvc.model.TreeFolderDataInfo">
+		<id column="id" property="id" jdbcType="VARCHAR" />
+		<result column="text" property="text" jdbcType="VARCHAR" />
+		<result column="tags" property="tags" jdbcType="VARCHAR" />
+	</resultMap>
+	<!-- 查询基础字段 -->
+	<sql id="Base_Column_List">
+		folderID, folderName, folderState, operator, createDate
+	</sql>
+	<!-- 基础条件 -->
+	<sql id="Base_Conditon_List">
+		<if test="folderID != null">
+			and folderID = #{folderID}
+		</if>
+		<if test="folderName != null">
+			and folderName = #{folderName}
+		</if>
+		<if test="folderState != null">
+			and folderState = #{folderState}
+		</if>
+		<if test="operator != null">
+			and operator = #{operator}
+		</if>
+		<if test="createDate != null">
+			and createDate = #{createDate}
+		</if>
+	</sql>
+	<!-- 查询数据 -->
+	<select id="queryFolderInfo" resultMap="FolderInfoResultMap"
+		parameterType="cn.springmvc.model.FolderInfo">
+		select
+		<include refid="Base_Column_List" />
+		from folder_info where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</select>
+	
+	<select id="queryParentFolderInfo" parameterType="java.lang.String"
+		resultMap="FolderInfoResultMap">
+		SELECT folder_info.folderID as folderID
+        FROM folder_relation,folder_info
+        WHERE childrenFolderID=#{fileID} AND folder_relation.parentFolderID=folder_info.folderID
+	</select>
+	
+	<select id="queryAllParentFolderNodeInfo" parameterType="java.lang.String"
+		resultMap="FolderInfoResultMap">
+		<![CDATA[SELECT T2.childrenFolderID AS folderID
+                 FROM ( 
+                     SELECT 
+                     @r AS _id, 
+                    (SELECT @r := parentFolderID FROM folder_relation WHERE childrenFolderID = _id limit 1 ) AS parentFolderID, 
+                     @l := @l + 1 AS lvl 
+                     FROM 
+                    (SELECT @r := #{fileID}, @l := '') vars, 
+                     folder_relation h 
+                     WHERE @r <> '') T1 
+                 JOIN folder_relation T2 
+                 ON T1._id = T2.childrenFolderID 
+                 ORDER BY T1.lvl ASC]]>
+	</select>
+	<!-- 查询用户所有目录信息（为了移动复制文件选择目标目录用） -->
+	<select id="queryAllFolderInfoByKey" resultMap="TreeFolderDataInfoResultMap" parameterType="java.util.Map">
+		<!-- SELECT getAllFolderInfo(#{parentFolderID}, #{userID}) -->		
+		<!-- select
+		B.childrenFolderID as id,
+		A.folderName as text		
+		from folder_info A
+		inner join folder_relation B
+		on A.folderID = B.parentFolderID		
+		where B.userID = #{userID}
+		and B.parentFolderID = #{parentFolderID}
+		and A.folderState = 'normal'
+		order by A.createDate DESC -->
+		
+		select folderID as id, 
+			folderName as text,
+			'folder' as tags 
+		from folder_info 
+		where folderState = 'normal' 
+		and folderID in(select childrenFolderID 
+						from folder_relation 
+						where userID = #{userID} 
+						and parentFolderID = #{parentFolderID} 
+						and <![CDATA[find_in_set(childrenFolderID, #{selectFolderIds})<=0]]>
+						)
+		order by createDate DESC
+		<!-- union 
+		select folderID as id, 
+			folderName as text
+			'folder' as tags 
+		from folder_info 
+		where folderState = 'normal' 
+		and folderID in(select childrenFolderID from folder_relation where userID = #{userID} and parentFolderID = #{parentFolderID})
+		order by createDate DESC -->	
+	</select>
+	<!-- 删除数据 -->
+	<delete id="deleteFolderInfo" parameterType="cn.springmvc.model.FolderInfo">
+		delete from
+		folder_info
+		where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</delete>
+	<!-- 增加数据 -->
+	<insert id="insertFolderInfo" parameterType="cn.springmvc.model.FolderInfo">
+		insert into folder_info
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="folderID != null">
+				folderID,
+			</if>
+			<if test="folderName != null">
+				folderName,
+			</if>
+			<if test="folderState != null">
+				folderState,
+			</if>
+			<if test="operator != null">
+				operator,
+			</if>
+			<if test="createDate != null">
+				createDate,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="folderID != null">
+				#{folderID},
+			</if>
+			<if test="folderName != null">
+				#{folderName},
+			</if>
+			<if test="folderState != null">
+				#{folderState},
+			</if>
+			<if test="operator != null">
+				#{operator},
+			</if>
+			<if test="createDate != null">
+				#{createDate},
+			</if>
+		</trim>
+	</insert>
+	<!-- 修改数据 -->
+	<update id="updateFolderInfo" parameterType="cn.springmvc.model.FolderInfo">
+		update folder_info
+		<set>
+			<if test="foldername != null">
+				folderName = #{folderName},
+			</if>
+			<if test="folderState != null">
+				folderState = #{folderState},
+			</if>
+			<if test="operator != null">
+				operator = #{operator},
+			</if>
+			<if test="createdate != null">
+				createDate = #{createDate},
+			</if>
+		</set>
+		where folderID = #{folderID}
+	</update>
+	<!-- 删除文件 -->
+	<update id="deleteFile" parameterType="java.lang.String">
+		UPDATE folder_info SET folderState='deleted' where folderID = #{fileID}
+	</update>
+</mapper>

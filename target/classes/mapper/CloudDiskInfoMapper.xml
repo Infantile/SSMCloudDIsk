@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.CloudDiskInfoMapper">
+	<resultMap id="CloudDiskResultMap" type="cn.springmvc.model.CloudDiskInfo">
+		<result column="userID" property="userid" jdbcType="VARCHAR" />
+		<result column="totalSize" property="totalsize" jdbcType="VARCHAR" />
+		<result column="usedSize" property="usedsize" jdbcType="VARCHAR" />
+		<result column="updateDate" property="updatedate" jdbcType="VARCHAR" />
+	</resultMap>
+	<!-- 查询基础字段 -->
+	<sql id="Base_Column_List">
+		userID, totalSize, usedSize, updateDate
+	</sql>
+	<!-- 基础条件 -->
+	<sql id="Base_Conditon_List">
+		<if test="userID!=null">
+			and userID = #{userID}
+		</if>
+		<if test="totalSize!=null">
+			and totalSize = #{totalSize}
+		</if>
+		<if test="usedSize!=null">
+			and usedSize = #{usedSize}
+		</if>
+		<if test="updateDate!=null">
+			and updateDate = #{updateDate}
+		</if>
+	</sql>	
+	<!-- 查询数据 -->
+	<select id="queryCloudDiskInfo" parameterType="cn.springmvc.model.CloudDiskInfo"
+		resultMap="CloudDiskResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from cloud_disk_info where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</select>
+	<!-- 增加数据 -->
+	<insert id="insertCloudDiskInfo" parameterType="cn.springmvc.model.CloudDiskInfo">
+		insert into cloud_disk_info
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				userID,
+			</if>
+			<if test="totalSize != null">
+				totalSize,
+			</if>
+			<if test="usedSize != null">
+				usedSize,
+			</if>
+			<if test="updateDate != null">
+				updateDate,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				#{userID},
+			</if>
+			<if test="totalSize != null">
+				#{totalSize},
+			</if>
+			<if test="usedSize != null">
+				#{usedSize},
+			</if>
+			<if test="updateDate != null">
+				#{updateDate},
+			</if>
+		</trim>
+	</insert>
+	<!-- 删除数据 -->
+	<delete id="deleteCloudDiskInfo" parameterType="cn.springmvc.model.CloudDiskInfo">
+		delete from
+		cloud_disk_info where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</delete>
+	<!-- 修改数据 -->
+	<update id="updateCloudDiskInfo" parameterType="cn.springmvc.model.CloudDiskInfo">
+		update cloud_disk_info
+		<set>			
+			<if test="totalSize != null">
+				totalSize = #{totalSize},
+			</if>
+			<if test="usedSize != null">
+				usedSize = #{usedSize},
+			</if>
+			<if test="updateDate != null">
+				updateDate = #{updateDate},
+			</if>
+		</set>
+		where userID = #{userID}
+	</update>
+	<!-- 删除文件时更新用户磁盘容量已用大小 -->
+	<update id="updateCloudDiskCapacityInfo" parameterType="cn.springmvc.model.CloudDiskInfo">
+		update cloud_disk_info
+		<set>			
+			<if test="totalSize != null">
+				totalSize = #{totalSize},
+			</if>
+			<if test="usedSize != null">
+				usedSize = usedSize-#{usedSize},
+			</if>
+			<if test="updateDate != null">
+				updateDate = #{updateDate},
+			</if>
+		</set>
+		where userID = #{userID}
+	</update>
+</mapper>

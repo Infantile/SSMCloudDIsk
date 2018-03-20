@@ -1,0 +1,188 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    font-weight: 300;
+    color: #888;
+    line-height: 30px;
+    text-align: center;
+    background-image:url(../img/skin-login.jpg);
+}
+
+.top-content .text {
+	margin-top: 20px;
+	color: #fff;
+}
+
+.top-content .text h1 { color: #fff; }
+
+
+.form-box {
+	display: inline-block;
+	-moz-border-radius: 20px 20px 20px 20px; 
+	-webkit-border-radius: 20px 20px 20px 20px; 
+	border-radius: 20px 20px 20px 20px;
+	margin-top: 110px;
+	box-shadow: 0 3px 9px rgba(0, 0, 0, .5);
+}
+
+.form-top {
+	overflow: hidden;
+	background: #fff;
+	-moz-border-radius: 20px 20px 0 0; -webkit-border-radius: 20px 20px 0 0; border-radius: 20px 20px 0 0;
+	text-align: left;
+}
+
+.form-content {
+	background: #eee;
+	-moz-border-radius: 0 0 20px 20px; -webkit-border-radius: 0 0 20px 20px; border-radius: 0 0 20px 20px;
+	text-align: left;
+}
+
+.form-content form textarea {
+	height: 100px;
+}
+
+.form-content form button.btn {
+	width: 100%;
+}
+
+.form-content form .input-error {
+	border-color: #4aaf51;
+}
+
+.input-size{
+  	font-size: 14px;
+	line-height: 14px;
+	height: 30px;
+  	padding: 5px 10px;
+  	border-radius: 3px;
+}
+
+::-webkit-input-placeholder{ 
+	font-size:14px;
+} 
+
+::-moz-placeholder{
+	font-size:14px;
+}
+
+:-ms-input-placeholder{
+	font-size:14px;
+}
+
+input:-moz-placeholder{
+	font-size:14px;
+}
+
+.input-interval{
+	margin: 20px 0 20px 0;
+}
+
+@media screen and (max-width: 499px){
+	.form-box{
+		width:80%;
+	}
+	
+	.form-content{
+		padding: 5px 30px 20px 30px;
+	}
+	
+	button{
+		margin-top: 0px;
+	}
+	
+	h4{
+		font-size:13px;
+	}
+	
+	.input-group-addon{
+  		padding: 6px 6px;
+	}
+}
+
+@media screen and (min-width: 500px) {
+	.form-box{
+		width:50%;
+	}
+	
+	.form-content{
+		padding: 10px 50px 20px 50px;
+	}
+	
+	h4{
+		margin:20px auto 20px auto;
+		font-size:16px;
+	}
+	
+	.input-size{
+		padding: 8px 13px;
+		height: 36px;
+		border-radius: 5px;
+	}
+	
+	button{
+		margin-top: 10px;
+	}
+}
+
+@media screen and (min-width: 992px) {
+	.form-box{
+		width:47%;
+	}
+	
+	.form-content{
+		padding: 20px 50px 30px 50px;
+	}
+	
+	h4{
+		margin:20px auto 20px auto;
+		font-size:17px;
+	}
+	
+	.input-size{
+		padding: 10px 10px;
+		line-height: 24px;
+		font-size: 18px;
+		height: 40px;
+		border-radius: 8px;
+	}
+	
+	button{
+		margin-top: 10px;
+	}
+}
+
+@media screen and (min-width: 1200px) {
+	.form-box{
+		width:43%;
+	}
+	
+	.form-content{
+		padding: 20px 60px 30px 60px;
+	}
+	
+	h4{
+		margin:20px auto 20px auto;
+		font-size:18px;
+	}
+	
+	button{
+		margin-top: 15px;
+	}
+	
+	.input-size{
+		padding: 10px 16px;
+		height: 46px;
+	}
+}
+
+.navbar-text{
+	float: none;
+	margin-top: 15px;
+  	margin-bottom: 15px;
+}
+
+.navbar-inverse {
+	background-color: #0D2A49;
+  	border-color: #0D2A49;
+}

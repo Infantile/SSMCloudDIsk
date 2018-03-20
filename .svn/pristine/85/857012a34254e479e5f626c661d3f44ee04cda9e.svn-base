@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.GroupMemberInfoMapper" >
+  <resultMap id="GroupInfoResultMap" type="cn.springmvc.model.GroupInfo">
+		<result column="groupID" property="groupID" jdbcType="VARCHAR" />
+		<result column="groupName" property="groupName" jdbcType="VARCHAR" />
+		<result column="operator" property="operator" jdbcType="VARCHAR" />
+		<result column="createDate" property="createDate" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="CloudDiskUserResultMap" type="cn.springmvc.model.CloudDiskUser">
+		<result column="userID" property="userID" jdbcType="VARCHAR" />
+		<result column="userName" property="userName" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="QueryGroupInfoResultMap" type="cn.springmvc.model.QueryGroupInfo">
+		<result column="groupID" property="groupID" jdbcType="VARCHAR" />
+		<result column="groupName" property="groupName" jdbcType="VARCHAR" />
+		<result column="userName" property="userName" jdbcType="VARCHAR" />
+		<result column="createDate" property="createDate" jdbcType="VARCHAR" />
+		<result column="userLoginID" property="userLoginID" jdbcType="VARCHAR" />
+  </resultMap>
+  <!-- 查询基础字段 -->
+  <sql id="Base_Column_List">
+		groupID, userID
+  </sql>
+  <sql id="Base_CloudColumn_List">
+  		userID,userLoginID, userName, password, operator, createDate
+  </sql>
+  <!-- 查询基础条件 -->
+  <sql id="Base_Conditon_List">
+      <if test="groupID!=null">
+		  and groupID = #{groupID}
+	  </if>
+	  <if test="userID!=null">
+		  and userID = #{userID}
+	  </if>
+  </sql>	
+  
+  <!-- 排序查询条件 -->
+  <sql id="group_orderCondition">
+	  <if test="sort == null or sort == ''">
+		  CONVERT(B.groupName USING GBK) ${order}
+	  </if>
+	  <if test="sort=='userLoginID'">
+		  C.userLoginID ${order}
+	  </if>
+	  <if test="sort=='groupname'">
+	  	  CONVERT(B.groupName USING GBK) ${order}
+	  </if>
+	  <if test="sort=='username'">
+		  CONVERT(C.userName USING GBK) ${order}
+	  </if>
+	  <if test="sort=='createdate'">
+		  B.createDate ${order}
+	  </if>
+  </sql>
+  
+  <!-- 排序查询条件 -->
+  <sql id="member_orderCondition">
+  	  userName ASC,userLoginID ASC
+  </sql>
+  
+  <!-- 通过userID查出所有的群组 -->
+  <select id="queryByUserId" parameterType="java.util.Map"  resultMap="QueryGroupInfoResultMap">
+  	select B.groupID as groupID,B.groupName, C.userName, B.createDate, C.userLoginID
+  	from group_member_info A,group_info B,cloud_disk_user C
+  	where A.userID = #{userID} 
+  	and A.groupID = B.groupID 
+  	and B.operator = C.userID
+  	<if test="searchVal!=null">
+  		and (B.groupName LIKE CONCAT('%',#{searchVal},'%') 
+  		or C.userName LIKE CONCAT('%',#{searchVal},'%') 
+  		or B.createDate LIKE CONCAT('%',#{searchVal},'%')) 
+  	</if>
+  	order by <include refid="group_orderCondition"/>
+  </select>
+
+  <!-- 通过groupID查询出组的成员信息 -->
+  <select id="queryByGroupId" parameterType="java.util.Map"  
+  		resultMap="CloudDiskUserResultMap">
+  	select B.userName, B.userID as userID, B.userLoginID
+  	from group_member_info A,cloud_disk_user B
+  	where A.groupID = #{groupID} and A.userID != #{userID} 
+  	and A.userID = B.userID
+  	<if test="searchVal!=null">
+  		and (B.userName LIKE CONCAT('%',#{searchVal},'%') 
+  		or B.userLoginID LIKE CONCAT('%',#{searchVal},'%')) 
+  	</if>
+  	<if test="select!=null">
+		union select userName, userID, userLoginID from cloud_disk_user where FIND_IN_SET(userID,#{select})>0
+	</if>
+  	order by <include refid="member_orderCondition"/>
+  </select>
+  
+  <!-- 查询所有系统用户信息 -->
+  <select id="queryCloudAllUser" parameterType="java.util.Map"
+		resultMap="CloudDiskUserResultMap">
+	select
+	<include refid="Base_CloudColumn_List" />
+	from cloud_disk_user where
+	userID != #{userID}
+	<if test="searchVal!=null">
+			and (userName LIKE CONCAT('%',#{searchVal},'%') or userLoginID LIKE CONCAT('%',#{searchVal},'%'))
+	</if>
+	order by <include refid="member_orderCondition"/>
+  </select>
+  
+  <!-- 查询所有用户信息 -->
+  <select id="queryCloudRestUser" parameterType="java.util.Map"
+		resultMap="CloudDiskUserResultMap">
+	select
+	<include refid="Base_CloudColumn_List" />
+	from cloud_disk_user where
+	userID != #{userID}
+	and userID not in(
+    SELECT cloud_disk_user.userID from cloud_disk_user,group_member_info 
+    where group_member_info.userID = cloud_disk_user.userID 
+    and group_member_info.groupID = #{groupID})
+	<if test="searchVal!=null">
+		and (userName LIKE CONCAT('%',#{searchVal},'%') or userLoginID LIKE CONCAT('%',#{searchVal},'%'))
+	</if>
+	order by <include refid="member_orderCondition"/>
+  </select>
+  
+  <select id="selectValidMember" parameterType="java.util.Map"
+  		resultMap="CloudDiskUserResultMap">
+  	SELECT userName, userID, userLoginID
+  	from cloud_disk_user
+  	<if test="select!=null">
+  		where FIND_IN_SET(userID,#{select}) > 0
+  	</if>
+  	<if test="searchVal!=null">
+  		and (userName LIKE CONCAT('%',#{searchVal},'%') 
+  		or userLoginID LIKE CONCAT('%',#{searchVal},'%')) 
+  	</if>
+  	order by <include refid="member_orderCondition"/>
+  </select>
+  
+  <delete id="delete" parameterType="cn.springmvc.model.GroupMemberInfoKey" >
+    delete from group_member_info
+    where 1 = 1
+    <include refid="Base_Conditon_List"></include>
+  </delete>
+  
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from group_member_info
+    where groupID = #{_parameter}
+  </delete>
+  
+  <insert id="insertSelective" parameterType="cn.springmvc.model.GroupMemberInfoKey" >
+    insert into group_member_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="groupID != null" >
+        groupID,
+      </if>
+      <if test="userID != null" >
+        userID,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="groupID != null" >
+        #{groupID},
+      </if>
+      <if test="userID != null" >
+        #{userID},
+      </if>
+    </trim>
+  </insert>
+</mapper>

@@ -1,0 +1,194 @@
+#inputFile {
+	padding-left: 15px;
+	width: 200px;
+	height: 35px;
+	margin-top: 5px;
+	border: 1px solid #E7EBEE;
+	border-radius: 3px;
+	color: #999999;
+	background-color: #FFFFFF;
+}
+.modal-content {
+	border-radius:3px;
+	background-color:#F1F8FE;
+}
+#folderTree .list-group {
+	margin-bottom: 0;
+}
+#folderTree {
+	min-height: 200px;
+	max-height: 300px;
+	overflow-y: auto;
+	max-width: 316px;
+	overflow-x: auto;
+}
+
+.modal{
+	top: 15%;
+}
+
+#changeGroupInfoModal.modal,#groupInfoModal.modal,#createGroupModal.modal,#shareFileModal.modal{
+	top: 0%;
+}
+
+.modal-header{
+	padding: 15px 15px 0 15px;
+	text-align: center;
+	border-bottom: 0;
+}
+
+.modal-footer{
+	border-top: 1px solid #ddd;
+}
+
+.modal-sm {
+    width: 350px;
+}
+
+.modal-md{
+	width: 500px;
+}
+
+.modal-content .modal-header {
+	background-color:#f1f8fe;
+	border-top-left-radius:3px;
+	border-top-right-radius:3px;
+}
+
+.modal-header .modal-title {
+	font-size:18px;
+	font-weight:bold;
+	
+}
+
+.form-group label {
+	font-size:13px;
+	font-weight:bold;
+}
+
+.modal-body label{
+	font-size: 15px;
+}
+
+.list-group-item{
+	padding: 1px 15px;
+}
+
+li.list-style{
+	background: #e0f0f0;
+}
+
+li.list-style:not(:first-child) label{
+	font-weight: 700;
+}
+
+.form-left,.form-right{
+	background: white;
+	padding: 5px 0;
+	width: 41%;
+	float: left;
+	overflow-x: hidden;
+	overflow-y: auto;
+	box-shadow: 1px 3px 6px rgba(0, 0, 0, .5);
+}
+
+#inGroupName.form-control{
+	text-align: center;
+	display: inline;
+	width: 50%
+}
+
+#addToGroup_btn,#addToCrtGroup_btn,#removeFromGroup_btn,#removeFromCrtGroup_btn {
+	margin :5px auto;
+}
+
+.form-move-button{
+	display :table;
+	width: 18%;
+	float: left;
+	text-align: center;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 10px;
+  background-color: rgba(25, 147, 147, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: rgba(25, 147, 147, 0.2);
+}
+
+.update-input{
+	height: 34px;
+  	padding: 6px 12px;
+	font-size: 14px;
+  	line-height: 1.42857143;
+  	color: #555;
+  	background-color: #fff;
+  	background-image: none;
+  	border: 1px solid #ccc;
+  	border-radius: 4px;
+  	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  	box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+  	-webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+}
+
+@media screen and (max-width: 992px){
+	#changeGroupInfoModal .modal-dialog,#createGroupModal .modal-dialog,#groupInfoModal .modal-dialog,#shareFileModal .modal-dialog{
+		width: 550px;
+	}
+	
+	.form-left,.form-right{
+		height: 280px;
+	}
+	
+	.form-height {
+		height: 280px;
+	}
+  	
+  	.form-move-button{
+		height: 280px;
+	}
+}
+
+@media screen and (min-width: 993px){
+	#changeGroupInfoModal .modal-dialog,#createGroupModal .modal-dialog,#groupInfoModal .modal-dialog,#shareFileModal .modal-dialog{
+		width: 580px;
+	}
+	
+	.form-left,.form-right{
+		height: 330px;
+	}
+	
+	.form-move-button{
+		height: 330px;
+	}
+	
+	.form-height {
+		height: 330px;
+	}
+}
+@media screen and (min-width: 1367px){
+	#changeGroupInfoModal .modal-dialog,#createGroupModal .modal-dialog,#groupInfoModal .modal-dialog,#shareFileModal .modal-dialog{
+		width: 650px;
+	}
+	
+	.form-left,.form-right{
+		height: 430px;
+	}
+	
+	.form-move-button{
+		height: 430px;
+	}
+	
+	.form-height {
+		height: 430px;
+	}
+}

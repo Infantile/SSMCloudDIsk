@@ -1,0 +1,4 @@
+jdbc_driverClassName=com.mysql.jdbc.Driver
+jdbc_url=jdbc:mysql://10.177.2.241:3306/clouddisk?useUnicode=true&characterEncoding=utf8
+jdbc_username=root
+jdbc_password=zstack.mysql.password

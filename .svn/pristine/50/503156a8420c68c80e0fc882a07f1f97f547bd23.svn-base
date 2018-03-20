@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.RecycleInfoMapper">
+	<resultMap id="RecycleInfoResultMap" type="cn.springmvc.model.RecycleInfo">
+		<result column="userID" property="userid" jdbcType="VARCHAR" />
+		<result column="recycleObjectID" property="recycleobjectid"	jdbcType="VARCHAR" />
+		<result column="operator" property="operator" jdbcType="VARCHAR" />
+		<result column="createDate" property="createdate" jdbcType="VARCHAR" />
+	</resultMap>
+	<resultMap id="FileInfoResultMap" type="cn.springmvc.model.FileInfo">
+		<id column="fileID" property="fileid" jdbcType="VARCHAR" />
+		<result column="fileName" property="filename" jdbcType="VARCHAR" />
+		<result column="fileSize" property="filesize" jdbcType="VARCHAR" />
+		<result column="fileType" property="filetype" jdbcType="VARCHAR" />
+		<result column="fileState" property="filestate" jdbcType="VARCHAR" />
+		<result column="fileUploader" property="fileuploader" jdbcType="VARCHAR" />
+		<result column="fileUploaderTime" property="fileuploadertime" jdbcType="VARCHAR" />
+		<result column="fileGroupName" property="filegroupname" jdbcType="VARCHAR" />
+		<result column="filePath" property="filepath" jdbcType="VARCHAR" />
+		<result column="comment" property="comment" jdbcType="VARCHAR" />
+  </resultMap>
+  <!-- 排序查询条件 -->
+	<sql id="orderCondition">
+		<if test="sort == null or sort == ''">
+			AA.fileType DESC, AA.fileUploaderTime DESC
+		</if>
+		<if test="sort=='filename'">
+			AA.fileType ${order}, AA.fileName ${order}
+		</if>
+		<if test="sort=='filesize'">
+			AA.fileType ${order}, AA.fileSize+0 ${order}
+		</if>
+		<if test="sort=='filetype'">
+			AA.fileType ${order}
+		</if>
+		<if test="sort=='fileuploadertime'">
+			AA.fileType ${order}, AA.fileUploaderTime ${order}
+		</if>
+		<if test="sort=='comment'">
+			AA.fileType ${order}, AA.comment ${order}
+		</if>
+	</sql>
+  <!-- 查询回收站table数据 -->
+  <select id="queryRecycleTableInfo" parameterType="java.util.Map"
+		resultMap="FileInfoResultMap">
+		select * from (
+			select 
+				A.recycleObjectID AS fileID, 
+				B.folderName AS fileName, 
+				'' AS fileSize, 
+				'文件夹' AS fileType, 
+				A.createDate AS fileUploaderTime, 
+				'' AS comment,
+				'' AS fileGroupName,
+				'' AS filePath
+			from recycle_info A,folder_info B
+			where A.recycleObjectID = B.folderID 
+			      and B.folderState = 'deleted' 
+			      and A.userID = #{userId}
+			union
+			select 
+				B.recycleObjectID AS fileID, 
+				A.fileName, 
+				A.fileSize, 
+				A.fileType, 
+				B.createDate AS fileUploaderTime,
+				A.comment,
+				A.fileGroupName,
+				A.filePath
+			from file_info A, recycle_info B
+			where A.fileID = B.recycleObjectID 
+				  and A.fileState = 'deleted' 
+				  and B.userID = #{userId}
+		) AA order by <include refid="orderCondition"/>	
+  </select>
+  <!-- 搜索框输入查询功能-->
+	<select id="querySearchRecycleInfo" parameterType="java.util.Map" resultMap="FileInfoResultMap">
+		select * from (
+			select 
+				A.folderID AS fileID, 
+				A.folderName AS fileName, 
+				'' AS fileSize, 
+				'文件夹' AS fileType, 
+				A.createDate AS fileUploaderTime, 
+				'' AS comment,
+				'' AS fileGroupName,
+				'' AS filePath
+			from folder_info A 
+			inner join recycle_info B 
+			on A.folderID = B.recycleObjectID 
+			where  B.userID = #{userId}
+			  and A.folderState = 'deleted'
+			  and A.folderName like CONCAT('%',#{search},'%') 
+			union
+			select 
+				A.fileID, 
+				A.fileName, 
+				A.fileSize, 
+				A.fileType, 
+				A.fileUploaderTime, 
+				A.comment,
+				A.fileGroupName,
+				A.filePath
+			from file_info A
+			inner join recycle_info B
+			on A.fileID = B.recycleObjectID
+			where  B.userID = #{userId}
+			  and A.fileState = 'deleted'
+			  and A.fileName like CONCAT('%',#{search},'%') 
+		) AA order by AA.fileType, AA.fileUploaderTime DESC
+	</select>
+	<!-- 查询基础字段 -->
+	<sql id="Base_Column_List">
+		userID, recycleObjectID, operator, createDate
+	</sql>
+	<!-- 基础条件 -->
+	<sql id="Base_Conditon_List">
+		<if test="userID != null">
+			and userID = #{userID}
+		</if>
+		<if test="recycleObjectID != null">
+			and recycleObjectID = #{recycleObjectID}
+		</if>
+		<if test="operator != null">
+			and operator = #{operator}
+		</if>
+		<if test="createDate != null">
+			and createDate = #{createDate}
+		</if>
+	</sql>
+	<!-- 查询数据 -->
+	<select id="queryRecycleInfoInfo" parameterType="cn.springmvc.model.RecycleInfo"
+		resultMap="RecycleInfoResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from recycle_info where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</select>
+	<!-- 增加数据 -->
+	<insert id="insertRecycleInfoInfo" parameterType="cn.springmvc.model.RecycleInfo">
+		insert into recycle_info
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				userID,
+			</if>
+			<if test="recycleObjectID != null">
+				recycleObjectID,
+			</if>
+			<if test="operator != null">
+				operator,
+			</if>
+			<if test="createDate != null">
+				createDate,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userID != null">
+				#{userID},
+			</if>
+			<if test="recycleObjectID != null">
+				#{recycleObjectID},
+			</if>
+			<if test="operator != null">
+				#{operator},
+			</if>
+			<if test="createDate != null">
+				#{createDate},
+			</if>
+		</trim>
+	</insert>
+	<!-- 删除数据 -->
+	<delete id="deleteRecycleInfoInfo" parameterType="cn.springmvc.model.RecycleInfo">
+		delete from
+		recycle_info where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</delete>
+	<!-- 修改数据 -->
+	<update id="updateRecycleInfoInfo" parameterType="cn.springmvc.model.RecycleInfo">
+		update recycle_info
+		<set>
+			<if test="recycleObjectID != null">
+				recycleObjectID = #{recycleObjectID},
+			</if>
+			<if test="operator != null">
+				operator = #{operator},
+			</if>
+			<if test="createDate != null">
+				createDate = #{createDate},
+			</if>
+		</set>
+		where userID = #{userID} 
+	</update>
+</mapper>

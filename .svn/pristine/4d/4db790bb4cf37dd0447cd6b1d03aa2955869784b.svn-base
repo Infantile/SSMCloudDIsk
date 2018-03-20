@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.GroupInfoMapper" >
+  <resultMap id="BaseResultMap" type="cn.springmvc.model.GroupInfo" >
+    <id column="groupID" property="groupid" jdbcType="VARCHAR" />
+    <result column="groupName" property="groupname" jdbcType="VARCHAR" />
+    <result column="operator" property="operator" jdbcType="VARCHAR" />
+    <result column="createDate" property="createdate" jdbcType="VARCHAR" />
+  </resultMap>
+  <!-- 查询基础字段 -->
+  <sql id="Base_Column_List" >
+    groupID, groupName, operator, createDate
+  </sql>
+  <!-- 查询基础条件 -->
+  <sql id="Base_Conditon_List">
+      <if test="groupID!=null">
+		  and groupID = #{groupID}
+	  </if>
+	  <if test="groupName!=null">
+		  and groupName = #{groupName}
+	  </if>
+	  <if test="operator!=null">
+		  and operator = #{operator}
+	  </if>
+	  <if test="createDate!=null">
+		  and createDate = #{createDate}
+	  </if>
+  </sql>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+    <include refid="Base_Column_List" />
+    from group_info
+    where groupID = #{_parameter}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.String" >
+    delete from group_info
+    where groupID = #{_parameter}
+  </delete>
+  <insert id="insert" parameterType="cn.springmvc.model.GroupInfo" >
+    insert into group_info (groupID, groupName, operator, 
+      createDate)
+    values (#{groupid,jdbcType=VARCHAR}, #{groupname,jdbcType=VARCHAR}, #{operator,jdbcType=VARCHAR}, 
+      #{createdate,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="cn.springmvc.model.GroupInfo" >
+    insert into group_info
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="groupid != null" >
+        groupID,
+      </if>
+      <if test="groupname != null" >
+        groupName,
+      </if>
+      <if test="operator != null" >
+        operator,
+      </if>
+      <if test="createdate != null" >
+        createDate,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="groupid != null" >
+        #{groupID},
+      </if>
+      <if test="groupname != null" >
+        #{groupName},
+      </if>
+      <if test="operator != null" >
+        #{operator},
+      </if>
+      <if test="createdate != null" >
+        #{createDate},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateByPrimaryKeySelective" parameterType="cn.springmvc.model.GroupInfo" >
+    update group_info
+    <set>
+      <if test="groupname != null" >
+        groupName = #{groupname,jdbcType=VARCHAR},
+      </if>
+      <if test="operator != null" >
+        operator = #{operator,jdbcType=VARCHAR},
+      </if>
+      <if test="createdate != null" >
+        createDate = #{createdate,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where groupID = #{groupID}
+  </update>
+</mapper>

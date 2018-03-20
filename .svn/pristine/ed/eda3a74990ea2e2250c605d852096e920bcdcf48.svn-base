@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.springmvc.dao.FileInfoMapper">
+	<resultMap id="FileInfoResultMap" type="cn.springmvc.model.FileInfo">
+		<id column="fileID" property="fileid" jdbcType="VARCHAR" />
+		<result column="fileName" property="filename" jdbcType="VARCHAR" />
+		<result column="fileSize" property="filesize" jdbcType="VARCHAR" />
+		<result column="fileType" property="filetype" jdbcType="VARCHAR" />
+		<result column="fileState" property="filestate" jdbcType="VARCHAR" />
+		<result column="fileUploader" property="fileuploader" jdbcType="VARCHAR" />
+		<result column="fileUploaderTime" property="fileuploadertime" jdbcType="VARCHAR" />
+		<result column="fileGroupName" property="filegroupname" jdbcType="VARCHAR" />
+		<result column="filePath" property="filepath" jdbcType="VARCHAR" />
+		<result column="comment" property="comment" jdbcType="VARCHAR" />
+	</resultMap>
+	<!-- 查询基础字段 -->
+	<sql id="Base_Column_List">
+		fileID, fileName, fileSize, fileType, fileState,
+		fileUploader,
+		fileUploaderTime, fileGroupName, filePath, comment
+	</sql>
+	<!-- 基础条件 -->
+	<sql id="Base_Conditon_List">
+		<if test="fileID != null">
+			and fileID = #{fileID}
+		</if>
+		<if test="fileName != null">
+			and fileName = #{fileName}
+		</if>
+		<if test="fileSize != null">
+			and fileSize = #{fileSize}
+		</if>
+		<if test="fileType != null">
+			and fileType = #{fileType}
+		</if>
+		<if test="fileState != null">
+			and fileState = #{fileState}
+		</if>
+		<if test="fileUploader != null">
+			and fileUploader = #{fileUploader}
+		</if>
+		<if test="fileUploaderTime != null">
+			and fileUploaderTime = #{fileUploaderTime}
+		</if>
+		<if test="fileGroupName != null">
+			and fileGroupName = #{fileGroupName}
+		</if>
+		<if test="filePath != null">
+			and filePath = #{filePath}
+		</if>
+		<if test="comment != null">
+			and comment = #{comment}
+		</if>
+	</sql>
+	<!-- 排序查询条件 -->
+	<sql id="orderCondition">
+		<if test="sort == null or sort == ''">
+			AA.fileType DESC, AA.fileUploaderTime DESC
+		</if>
+		<if test="sort=='filename'">
+			AA.fileType ${order}, AA.fileName ${order}
+		</if>
+		<if test="sort=='filesize'">
+			AA.fileType ${order}, AA.fileSize+0 ${order}
+		</if>
+		<if test="sort=='filetype'">
+			AA.fileType ${order}
+		</if>
+		<if test="sort=='fileuploadertime'">
+			AA.fileType ${order}, AA.fileUploaderTime ${order}
+		</if>
+		<if test="sort=='comment'">
+			AA.fileType ${order}, AA.comment ${order}
+		</if>
+	</sql>
+	
+	<!-- 查询数据 -->
+	<select id="queryFileInfo" parameterType="cn.springmvc.model.FileInfo"
+		resultMap="FileInfoResultMap">
+		select
+		<include refid="Base_Column_List" />
+		from file_info where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</select>
+	
+	<!-- 查询一个文件有多少份 -->
+	<select id="queryFileNumber" parameterType="cn.springmvc.model.FileInfo"
+		resultMap="FileInfoResultMap">
+		SELECT *
+        FROM file_info
+        WHERE filePath= (
+        SELECT filePath 
+        FROM file_info
+        WHERE fileID=#{fileID} )
+	</select>
+	<!-- 查询我的文件table数据 -->
+	<select id="queryMyFileTableInfo" parameterType="java.util.Map" resultMap="FileInfoResultMap">
+		select * from (
+			select 
+				A.folderID AS fileID, 
+				A.folderName AS fileName, 
+				'' AS fileSize, 
+				'文件夹' AS fileType, 
+				A.createDate AS fileUploaderTime, 
+				'' AS comment,
+				'' AS fileGroupName,
+				'' AS filePath
+			from folder_info A 
+			inner join folder_relation B 
+			on A.folderID = B.childrenFolderID 
+			where B.isRootFolder = 1 
+			  and B.userID = #{userId}
+			  and A.folderState = 'normal'
+			union
+			select 
+				A.fileID, 
+				A.fileName, 
+				A.fileSize, 
+				A.fileType, 
+				A.fileUploaderTime, 
+				A.comment,
+				A.fileGroupName,
+				A.filePath
+			from file_info A
+			inner join folder_relation B
+			on A.fileID = B.childrenFolderID
+			where B.isRootFolder = 1 
+			  and B.userID = #{userId}
+			  and A.fileState = 'normal'
+		) AA order by <include refid="orderCondition"/>
+	</select>
+	<!-- 根据文件ID查询其文件信息 -->
+	<select id="queryMyFileInfo" parameterType="java.util.Map" resultMap="FileInfoResultMap">
+		SELECT 
+        folderID AS fileID, 
+        folderName AS fileName, 
+        '' AS fileSize, 
+        '文件夹' AS fileType, 
+        createDate AS fileUploaderTime, 
+        '' AS COMMENT,
+        '' AS fileGroupName,
+        '' AS filePath
+        FROM folder_info
+        WHERE folderID=#{fileID}
+        UNION
+        SELECT 
+        fileID, 
+        fileName, 
+        fileSize, 
+        fileType, 
+        fileUploaderTime, 
+        COMMENT,
+        fileGroupName,
+        filePath 
+        FROM file_info
+        WHERE fileID=#{fileID}
+	</select>
+	<!-- 点击目录查询目录下所有文件以及文件目录-->
+	<select id="queryFolderContainInfo" parameterType="java.util.Map" resultMap="FileInfoResultMap">
+		select * from (
+			select 
+				A.folderID AS fileID, 
+				A.folderName AS fileName, 
+				'' AS fileSize, 
+				'文件夹' AS fileType, 
+				A.createDate AS fileUploaderTime, 
+				'' AS comment,
+				'' AS fileGroupName,
+				'' AS filePath
+			from folder_info A
+			where <![CDATA[find_in_set(A.folderID, #{folderRelations})>0]]>			
+    		and A.folderState = 'normal'
+			union
+			select 
+				A.fileID, 
+				A.fileName, 
+				A.fileSize, 
+				A.fileType, 
+				A.fileUploaderTime, 
+				A.comment,
+				A.fileGroupName,
+				A.filePath
+			from file_info A
+			where <![CDATA[find_in_set(A.fileID, #{folderRelations})>0]]>
+    		and A.fileState = 'normal'
+		) AA order by <include refid="orderCondition"/>	
+	</select>	
+	<!-- 搜索框输入查询功能-->
+	<select id="querySearchInfo" parameterType="java.util.Map" resultMap="FileInfoResultMap">
+		select * from (
+			select 
+				A.folderID AS fileID, 
+				A.folderName AS fileName, 
+				'' AS fileSize, 
+				'文件夹' AS fileType, 
+				A.createDate AS fileUploaderTime, 
+				'' AS comment,
+				'' AS fileGroupName,
+				'' AS filePath
+			from folder_info A 
+			inner join folder_relation B 
+			on A.folderID = B.childrenFolderID 
+			where  B.userID = #{userId}
+			  and A.folderState = 'normal'
+			  and A.folderName like CONCAT('%',#{search},'%') 
+			union
+			select 
+				A.fileID, 
+				A.fileName, 
+				A.fileSize, 
+				A.fileType, 
+				A.fileUploaderTime, 
+				A.comment,
+				A.fileGroupName,
+				A.filePath
+			from file_info A
+			inner join folder_relation B
+			on A.fileID = B.childrenFolderID
+			where  B.userID = #{userId}
+			  and A.fileState = 'normal'
+			  and A.fileName like CONCAT('%',#{search},'%') 
+		) AA order by AA.fileUploaderTime DESC
+	</select>
+	<!-- 共享文件搜索框输入查询功能-->
+	<select id="querySharedFileSearchInfo" parameterType="java.util.Map" resultMap="FileInfoResultMap">
+		select * from (
+			select 
+				A.folderID AS fileID, 
+				A.folderName AS fileName, 
+				'' AS fileSize, 
+				'文件夹' AS fileType, 
+				A.createDate AS fileUploaderTime, 
+				'' AS comment,
+				'' AS fileGroupName,
+				'' AS filePath
+			from folder_info A 
+			inner join folder_relation B 
+			on A.folderID = B.childrenFolderID 
+			where  
+			  A.folderState = 'normal'
+			  and A.folderName like CONCAT('%',#{search},'%') 
+			union
+			select 
+				A.fileID, 
+				A.fileName, 
+				A.fileSize, 
+				A.fileType, 
+				A.fileUploaderTime, 
+				A.comment,
+				A.fileGroupName,
+				A.filePath
+			from file_info A
+			inner join folder_relation B
+			on A.fileID = B.childrenFolderID
+			where  
+			  A.fileState = 'normal'
+			  and A.fileName like CONCAT('%',#{search},'%') 
+		) AA order by AA.fileUploaderTime DESC
+	</select>
+	<!-- 删除数据 -->
+	<delete id="deleteFileInfo" parameterType="cn.springmvc.model.FileInfo">
+		delete from file_info where 1 = 1
+		<include refid="Base_Conditon_List" />
+	</delete>
+	<!-- 增加数据 -->
+	<insert id="insertFileInfo" parameterType="cn.springmvc.model.FileInfo">
+		insert into file_info
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="fileID != null">
+				fileID,
+			</if>
+			<if test="fileName != null">
+				fileName,
+			</if>
+			<if test="fileSize != null">
+				fileSize,
+			</if>
+			<if test="fileType != null">
+				fileType,
+			</if>
+			<if test="fileState != null">
+				fileState,
+			</if>
+			<if test="fileUploader != null">
+				fileUploader,
+			</if>
+			<if test="fileUploaderTime != null">
+				fileUploaderTime,
+			</if>
+			<if test="fileGroupName != null">
+				fileGroupName,
+			</if>
+			<if test="filePath != null">
+				filePath,
+			</if>
+			<if test="comment != null">
+				comment,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="fileID != null">
+				#{fileID},
+			</if>
+			<if test="fileName != null">
+				#{fileName},
+			</if>
+			<if test="fileSize != null">
+				#{fileSize},
+			</if>
+			<if test="fileType != null">
+				#{fileType},
+			</if>
+			<if test="fileState != null">
+				#{fileState},
+			</if>
+			<if test="fileUploader != null">
+				#{fileUploader},
+			</if>
+			<if test="fileUploaderTime != null">
+				#{fileUploaderTime},
+			</if>
+			<if test="fileGroupName != null">
+				#{fileGroupName},
+			</if>
+			<if test="filePath != null">
+				#{filePath},
+			</if>
+			<if test="comment != null">
+				#{comment},
+			</if>
+		</trim>
+	</insert>
+	<update id="updateFileInfo" parameterType="cn.springmvc.model.FileInfo">
+		update file_info
+		<set>
+			<if test="fileName != null">
+				fileName = #{fileName},
+			</if>
+			<if test="fileSize != null">
+				fileSize = #{fileSize},
+			</if>
+			<if test="fileType != null">
+				fileType = #{fileType},
+			</if>
+			<if test="fileState != null">
+				fileState = #{fileState},
+			</if>
+			<if test="fileUploader != null">
+				fileUploader = #{fileUploader},
+			</if>
+			<if test="fileUploaderTime != null">
+				fileUploaderTime = #{fileUploaderTime},
+			</if>
+			<if test="fileGroupName != null">
+				fileGroupName = #{fileGroupName},
+			</if>
+			<if test="filePath != null">
+				filePath = #{filePath},
+			</if>
+			<if test="comment != null">
+				comment = #{comment},
+			</if>
+		</set>
+		where fileID = #{fileID}
+	</update>
+	<!-- 删除文件 -->
+	<update id="deleteFile" parameterType="java.lang.String">
+		UPDATE file_info SET fileState='deleted' where fileID = #{fileID}
+	</update>
+</mapper>

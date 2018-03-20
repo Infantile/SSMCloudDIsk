@@ -1,0 +1,8 @@
+.warning{
+	    border: 1px red solid;
+	    color: red;
+	}
+.success{
+	border:1px #37CC70 solid;
+	color:black;
+}
